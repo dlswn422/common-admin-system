@@ -4,15 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
-  Code2,
-  Menu,
-  Users,
   ShieldCheck,
   LogOut,
   ChevronRight,
-  Settings2,
-  type LucideIcon,
 } from "lucide-react";
 
 interface MenuItem {
@@ -34,33 +28,6 @@ interface AdminSidebarProps {
   onNavigate?: () => void;
 }
 
-// DB icon 문자열 → 실제 아이콘
-const iconByName: Record<string, LucideIcon> = {
-  LayoutDashboard,
-  Code2,
-  Menu,
-  Users,
-  ShieldCheck,
-  Settings2,
-};
-
-// icon 값이 없을 때 path 기준 기본 아이콘
-const iconByPath: Record<string, LucideIcon> = {
-  "/dashboard": LayoutDashboard,
-  "/codes": Code2,
-  "/menus": Menu,
-  "/users": Users,
-  "/roles": ShieldCheck,
-};
-
-function getMenuIcon(item: MenuItem) {
-  if (item.icon && iconByName[item.icon]) {
-    return iconByName[item.icon];
-  }
-
-  return iconByPath[item.path] || Settings2;
-}
-
 export default function AdminSidebar({
   onLogoutOpen,
   onNavigate,
@@ -71,6 +38,7 @@ export default function AdminSidebar({
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<UserInfo | null>(null);
 
+  // 사용자 및 메뉴 조회
   useEffect(() => {
     let isMounted = true;
 
@@ -78,7 +46,6 @@ export default function AdminSidebar({
       setIsLoading(true);
 
       try {
-        // 로그인 사용자 조회
         const storedUser = localStorage.getItem("user");
 
         if (!storedUser) {
@@ -95,6 +62,7 @@ export default function AdminSidebar({
           currentUser = JSON.parse(storedUser);
         } catch (error) {
           console.error("유저 정보 파싱 에러:", error);
+
           localStorage.removeItem("user");
 
           if (!isMounted) return;
@@ -110,16 +78,22 @@ export default function AdminSidebar({
 
         const roleId = currentUser.role_id;
 
-        if (!roleId || roleId === "undefined" || roleId === "null") {
+        if (
+          !roleId ||
+          roleId === "undefined" ||
+          roleId === "null"
+        ) {
           console.error("role_id가 없습니다.");
           setMenuItems([]);
           return;
         }
 
-        // 역할별 접근 가능 메뉴 조회
-        const response = await fetch(`/api/menus?role_id=${roleId}`, {
-          cache: "no-store",
-        });
+        const response = await fetch(
+          `/api/menus?role_id=${roleId}`,
+          {
+            cache: "no-store",
+          }
+        );
 
         if (!response.ok) {
           throw new Error("메뉴 응답 오류");
@@ -215,13 +189,10 @@ export default function AdminSidebar({
                 pathname === item.path ||
                 pathname.startsWith(`${item.path}/`);
 
-              const Icon = getMenuIcon(item);
-
               return (
                 <li key={item.id}>
                   <Link
                     href={item.path}
-                    // 모바일에서는 메뉴 선택 후 Drawer 닫기
                     onClick={onNavigate}
                     className={`group flex min-h-[52px] items-center gap-3 rounded-xl px-3.5 transition-all duration-200 ${
                       isActive
@@ -229,14 +200,15 @@ export default function AdminSidebar({
                         : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-100"
                     }`}
                   >
+                    {/* DB 메뉴 아이콘 */}
                     <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[18px] ${
                         isActive
                           ? "bg-white/[0.12]"
                           : "bg-white/[0.035] group-hover:bg-white/[0.06]"
                       }`}
                     >
-                      <Icon className="h-[18px] w-[18px]" />
+                      {item.icon || "⚙️"}
                     </span>
 
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">

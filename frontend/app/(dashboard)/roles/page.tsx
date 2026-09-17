@@ -19,6 +19,7 @@ import {
   ArrowUpRight,
   UserCog,
 } from "lucide-react";
+import AdminHero from "../../components/layout/admin-hero";
 
 interface Role {
   id: string;
@@ -50,8 +51,11 @@ export default function RolesPage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [selectedMenuIds, setSelectedMenuIds] = useState<string[]>([]);
   const [isAccessLoading, setIsAccessLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+  });
 
+  // 토스트 표시
   const showToast = useCallback(
     (message: string, type: "success" | "error" = "success") => {
       setToast({ message, type });
@@ -60,8 +64,10 @@ export default function RolesPage() {
     []
   );
 
+  // 역할 및 메뉴 조회
   const fetchData = useCallback(async () => {
     setIsLoading(true);
+
     try {
       const [rRes, mRes] = await Promise.all([
         fetch("/api/roles"),
@@ -84,20 +90,28 @@ export default function RolesPage() {
     fetchData();
   }, [fetchData]);
 
+  // 역할 검색
   const filteredRoles = useMemo(() => {
     return roles.filter((role) =>
       role.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [roles, searchQuery]);
 
+  // 관리자 역할 수
   const adminRoleCount = useMemo(() => {
-    return roles.filter((role) => role.name.includes("관리자")).length;
+    return roles.filter((role) =>
+      role.name.includes("관리자")
+    ).length;
   }, [roles]);
 
+  // 선택 메뉴 미리보기
   const selectedMenusPreview = useMemo(() => {
-    return allMenus.filter((menu) => selectedMenuIds.includes(menu.id));
+    return allMenus.filter((menu) =>
+      selectedMenuIds.includes(menu.id)
+    );
   }, [allMenus, selectedMenuIds]);
 
+  // 역할 모달 열기
   const openModal = async (role: Role | null = null) => {
     if (role) {
       setSelectedRole(role);
@@ -106,15 +120,20 @@ export default function RolesPage() {
       setIsAccessLoading(true);
 
       try {
-        const res = await fetch(`/api/roles/access?role_id=${role.id}`);
+        const res = await fetch(
+          `/api/roles/access?role_id=${role.id}`
+        );
+
         const accessData = await res.json();
 
         if (Array.isArray(accessData)) {
-          setSelectedMenuIds(accessData.map((item: any) => item.menu_id));
+          setSelectedMenuIds(
+            accessData.map((item: any) => item.menu_id)
+          );
         } else {
           setSelectedMenuIds([]);
         }
-      } catch (e) {
+      } catch (error) {
         setSelectedMenuIds([]);
       } finally {
         setIsAccessLoading(false);
@@ -129,24 +148,36 @@ export default function RolesPage() {
     setIsModalOpen(true);
   };
 
+  // 역할 저장
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const isEdit = !!selectedRole;
 
     try {
       const res = await fetch(
-        isEdit ? `/api/roles/${selectedRole?.id}` : "/api/roles",
+        isEdit
+          ? `/api/roles/${selectedRole?.id}`
+          : "/api/roles",
         {
           method: isEdit ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...formData, menu_ids: selectedMenuIds }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            menu_ids: selectedMenuIds,
+          }),
         }
       );
 
       if (res.ok) {
         showToast(
-          isEdit ? "역할 설정이 변경되었습니다." : "새 역할이 등록되었습니다."
+          isEdit
+            ? "역할 설정이 변경되었습니다."
+            : "새 역할이 등록되었습니다."
         );
+
         setIsModalOpen(false);
         fetchData();
       } else {
@@ -157,16 +188,21 @@ export default function RolesPage() {
     }
   };
 
+  // 역할 삭제
   const confirmDelete = async () => {
     if (!selectedRole) return;
 
     try {
-      const res = await fetch(`/api/roles/${selectedRole.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/roles/${selectedRole.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (res.ok) {
         showToast("역할이 삭제되었습니다.");
+
         setIsDeleteModalOpen(false);
         fetchData();
       } else {
@@ -177,6 +213,7 @@ export default function RolesPage() {
     }
   };
 
+  // 메뉴 선택
   const toggleMenuSelection = (menuId: string) => {
     setSelectedMenuIds((prev) =>
       prev.includes(menuId)
@@ -187,6 +224,7 @@ export default function RolesPage() {
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-8 pb-20">
+      {/* 토스트 */}
       {toast && (
         <div
           className={`fixed right-6 top-6 z-[11000] flex items-center gap-3 rounded-[22px] border border-white/10 px-5 py-4 shadow-[0_24px_50px_rgba(15,23,42,0.2)] backdrop-blur-2xl animate-in slide-in-from-right-8 duration-300 ${
@@ -195,112 +233,108 @@ export default function RolesPage() {
               : "bg-rose-600/90 text-white"
           }`}
         >
-          <div className="h-2.5 w-2.5 rounded-full bg-current animate-pulse" />
-          <p className="text-sm font-bold tracking-[-0.02em]">{toast.message}</p>
+          <div className="h-2.5 w-2.5 animate-pulse rounded-full bg-current" />
+
+          <p className="text-sm font-bold tracking-[-0.02em]">
+            {toast.message}
+          </p>
         </div>
       )}
 
-      <section className="soft-scale-in">
-        <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(8,15,30,0.96),rgba(11,18,36,0.88))] p-6 shadow-[0_28px_70px_rgba(2,6,23,0.18)] backdrop-blur-2xl md:p-8">
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_34%,transparent_72%,rgba(139,92,246,0.06))]" />
-          <div className="absolute -left-12 top-0 h-40 w-40 rounded-full bg-violet-500/12 blur-3xl" />
-          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-blue-500/10 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 h-32 w-32 rounded-full bg-cyan-400/10 blur-3xl" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      {/* 역할 관리 헤더 */}
+      <AdminHero
+        eyebrow="권한 제어"
+        icon={<Lock className="h-3.5 w-3.5" />}
+        title="역할 관리"
+        description="역할을 정의하고 메뉴별 접근 권한을 관리합니다."
+        actions={
+          <>
+            <button
+              onClick={fetchData}
+              className="group inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.06] text-slate-200 transition-all hover:bg-violet-500/10 hover:text-white"
+              aria-label="새로고침"
+            >
+              <RotateCw
+                className={`h-5 w-5 transition-transform duration-500 ${
+                  isLoading
+                    ? "animate-spin"
+                    : "group-hover:rotate-180"
+                }`}
+              />
+            </button>
 
-          <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-blue-500/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.18em] text-blue-200">
-                <Lock className="h-3.5 w-3.5" />
-                권한 제어
-              </div>
+            {/* 역할 추가 */}
+            <button
+              onClick={() => openModal()}
+              className="inline-flex h-12 items-center gap-2.5 rounded-[18px] bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-500 px-5 text-sm font-extrabold text-white shadow-lg transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+            >
+              <Plus className="h-4 w-4" />
+              새 역할 추가
+            </button>
+          </>
+        }
+      />
 
-              <h1 className="text-[1.9rem] font-black leading-[1.02] tracking-[-0.05em] text-white md:text-[2.4rem]">
-                역할 관리
-              </h1>
-
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 md:text-[15px]">
-                직무별 역할을 정의하고 메뉴 접근 권한을 정밀하게 제어합니다.
-                시스템 운영 권한을 구조적으로 관리할 수 있도록 정돈된 화면으로
-                구성했습니다.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={fetchData}
-                className="group inline-flex h-14 w-14 items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.06] text-slate-200 shadow-[0_14px_28px_rgba(2,6,23,0.18)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-400/20 hover:bg-violet-500/10 hover:text-white"
-                aria-label="새로고침"
-              >
-                <RotateCw
-                  className={`h-5 w-5 transition-transform duration-500 ${
-                    isLoading ? "animate-spin" : "group-hover:rotate-180"
-                  }`}
-                />
-              </button>
-
-              <button
-                onClick={() => openModal()}
-                className="group relative inline-flex items-center gap-3 overflow-hidden rounded-[22px] bg-gradient-to-r from-slate-900 via-violet-600 to-indigo-600 px-6 py-4 text-sm font-extrabold tracking-[-0.02em] text-white shadow-[0_18px_36px_rgba(99,102,241,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_42px_rgba(99,102,241,0.28)] active:scale-[0.98]"
-              >
-                <span className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.16)_20%,transparent_42%)] [animation:shimmer-x_2.8s_linear_infinite]" />
-                <Plus className="relative z-10 h-4.5 w-4.5" />
-                <span className="relative z-10">새 역할 추가</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* 역할 현황 */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
           {
             label: "전체 역할",
             value: roles.length.toString().padStart(2, "0"),
             icon: ShieldCheck,
-            tone: "bg-violet-500/10 text-violet-600 ring-violet-500/15",
+            tone:
+              "bg-violet-500/10 text-violet-600 ring-violet-500/15",
           },
           {
             label: "전체 메뉴",
             value: allMenus.length.toString().padStart(2, "0"),
             icon: LayoutGrid,
-            tone: "bg-blue-500/10 text-blue-600 ring-blue-500/15",
+            tone:
+              "bg-blue-500/10 text-blue-600 ring-blue-500/15",
           },
           {
             label: "관리자 포함 역할",
             value: adminRoleCount.toString().padStart(2, "0"),
             icon: Key,
-            tone: "bg-indigo-500/10 text-indigo-600 ring-indigo-500/15",
+            tone:
+              "bg-indigo-500/10 text-indigo-600 ring-indigo-500/15",
           },
           {
             label: "운영 상태",
             value: "정상",
             icon: Fingerprint,
-            tone: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/15",
+            tone:
+              "bg-emerald-500/10 text-emerald-600 ring-emerald-500/15",
           },
         ].map((stat, index) => {
           const Icon = stat.icon;
+
           return (
             <div
               key={stat.label}
               className="fade-up group rounded-[28px] border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/95 p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(15,23,42,0.1)]"
-              style={{ animationDelay: `${index * 70}ms` }}
+              style={{
+                animationDelay: `${index * 70}ms`,
+              }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-500">
                     {stat.label}
                   </p>
+
                   <p className="mt-3 text-[2rem] font-black leading-none tracking-[-0.05em] text-slate-900">
                     {stat.value}
                   </p>
                 </div>
+
                 <div
                   className={`flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ${stat.tone}`}
                 >
                   <Icon className="h-5 w-5" />
                 </div>
               </div>
+
               <p className="mt-4 text-sm font-medium text-slate-400">
                 {stat.label === "운영 상태"
                   ? "권한 제어 시스템 동작 상태"
@@ -311,10 +345,12 @@ export default function RolesPage() {
         })}
       </section>
 
+      {/* 역할 검색 */}
       <section className="fade-up rounded-[28px] border border-white/60 bg-white/80 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] backdrop-blur-xl">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="relative group flex-1">
             <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300 transition-colors group-focus-within:text-violet-600" />
+
             <input
               type="text"
               placeholder="검색할 역할 이름을 입력하세요"
@@ -326,11 +362,15 @@ export default function RolesPage() {
 
           <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600">
             <Sparkles className="h-4 w-4" />
-            {searchQuery ? `검색 결과 ${filteredRoles.length}개` : `총 ${roles.length}개 역할`}
+
+            {searchQuery
+              ? `검색 결과 ${filteredRoles.length}개`
+              : `총 ${roles.length}개 역할`}
           </div>
         </div>
       </section>
 
+      {/* 역할 목록 */}
       <section className="fade-up overflow-hidden rounded-[30px] border border-slate-200/80 bg-white/95 shadow-[0_16px_36px_rgba(15,23,42,0.06)]">
         <div className="border-b border-slate-100 px-6 py-5">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -338,9 +378,9 @@ export default function RolesPage() {
               <h2 className="text-[1.2rem] font-bold tracking-[-0.03em] text-slate-900">
                 역할 레지스트리
               </h2>
+
               <p className="mt-1 text-sm text-slate-500">
-                역할 이름과 기본 정보, 수정/삭제 작업을 빠르게 관리할 수
-                있습니다.
+                역할 이름과 기본 정보, 수정/삭제 작업을 빠르게 관리할 수 있습니다.
               </p>
             </div>
 
@@ -361,10 +401,10 @@ export default function RolesPage() {
 
           <div className="mt-3 space-y-3">
             {isLoading ? (
-              [1, 2, 3, 4].map((i) => (
+              [1, 2, 3, 4].map((item) => (
                 <div
-                  key={i}
-                  className="h-28 rounded-[24px] border border-slate-100 bg-slate-50/80 animate-pulse"
+                  key={item}
+                  className="h-28 animate-pulse rounded-[24px] border border-slate-100 bg-slate-50/80"
                 />
               ))
             ) : filteredRoles.length === 0 ? (
@@ -372,12 +412,15 @@ export default function RolesPage() {
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                   <UserCog className="h-6 w-6" />
                 </div>
+
                 <h3 className="text-lg font-bold tracking-[-0.03em] text-slate-800">
                   표시할 역할이 없습니다
                 </h3>
+
                 <p className="mt-2 text-sm text-slate-500">
                   검색 조건을 변경하거나 새 역할을 추가해보세요.
                 </p>
+
                 <button
                   onClick={() => openModal()}
                   className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition-all hover:bg-violet-600"
@@ -391,7 +434,9 @@ export default function RolesPage() {
                 <div
                   key={role.id}
                   className="group rounded-[24px] border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/80 px-5 py-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_18px_36px_rgba(15,23,42,0.08)]"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                  }}
                 >
                   <div className="grid gap-4 md:grid-cols-[110px_minmax(0,1fr)_180px_220px] md:items-center">
                     <div className="flex items-center gap-4">
@@ -421,12 +466,16 @@ export default function RolesPage() {
                       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                         <CalendarDays className="h-4.5 w-4.5" />
                       </div>
+
                       <div>
                         <p className="text-[11px] font-semibold tracking-[0.12em] text-slate-400">
                           생성일
                         </p>
+
                         <p className="mt-1 text-sm font-bold text-slate-700">
-                          {new Date(role.created_at).toLocaleDateString()}
+                          {new Date(
+                            role.created_at
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -437,7 +486,7 @@ export default function RolesPage() {
                         className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 text-sm font-bold text-white transition-all hover:bg-violet-600 active:scale-[0.98]"
                       >
                         <Edit3 className="h-4 w-4" />
-                        <span>수정</span>
+                        수정
                       </button>
 
                       <button
@@ -459,6 +508,7 @@ export default function RolesPage() {
         </div>
       </section>
 
+      {/* 역할 설정 모달 */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/45 p-6 backdrop-blur-xl animate-in fade-in duration-300">
           <div className="relative max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-[34px] border border-white/10 bg-white shadow-[0_40px_90px_rgba(15,23,42,0.25)] animate-in zoom-in-95 duration-300">
@@ -482,9 +532,9 @@ export default function RolesPage() {
                   <h3 className="mt-4 text-[2rem] font-black tracking-[-0.05em] text-slate-900">
                     {selectedRole ? "역할 수정" : "역할 추가"}
                   </h3>
+
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    역할명과 접근 가능한 메뉴를 설정해 시스템 권한 범위를
-                    관리합니다.
+                    역할명과 접근 가능한 메뉴를 설정해 시스템 권한 범위를 관리합니다.
                   </p>
                 </div>
 
@@ -493,21 +543,28 @@ export default function RolesPage() {
                     <label className="mb-2 block text-sm font-semibold text-slate-600">
                       역할명
                     </label>
+
                     <input
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({ name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          name: e.target.value,
+                        })
+                      }
                       className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 text-sm font-semibold text-slate-900 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
                       placeholder="예: 운영 관리자"
                     />
                   </div>
 
+                  {/* 메뉴 권한 */}
                   <div>
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <label className="text-sm font-semibold text-slate-600">
                         접근 가능한 메뉴
                       </label>
+
                       <span className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-600">
                         <ArrowUpRight className="h-3.5 w-3.5" />
                         {selectedMenuIds.length}개 선택됨
@@ -519,24 +576,31 @@ export default function RolesPage() {
                         {[1, 2, 3, 4].map((item) => (
                           <div
                             key={item}
-                            className="h-[84px] rounded-[22px] border border-slate-200 bg-white animate-pulse"
+                            className="h-[84px] animate-pulse rounded-[22px] border border-slate-200 bg-white"
                           />
                         ))}
                       </div>
                     ) : (
                       <div className="grid gap-3 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 sm:grid-cols-2">
                         {allMenus.map((menu) => {
-                          const isSelected = selectedMenuIds.includes(menu.id);
+                          const isSelected =
+                            selectedMenuIds.includes(menu.id);
 
                           return (
-                            <div key={menu.id} className="relative">
+                            <div
+                              key={menu.id}
+                              className="relative"
+                            >
                               <input
                                 type="checkbox"
                                 id={`menu-${menu.id}`}
                                 checked={isSelected}
-                                onChange={() => toggleMenuSelection(menu.id)}
+                                onChange={() =>
+                                  toggleMenuSelection(menu.id)
+                                }
                                 className="peer hidden"
                               />
+
                               <label
                                 htmlFor={`menu-${menu.id}`}
                                 className={`group flex cursor-pointer items-center gap-4 rounded-[22px] border-2 p-4 transition-all duration-300 active:scale-[0.98] ${
@@ -558,11 +622,14 @@ export default function RolesPage() {
                                 <div className="min-w-0 flex-1">
                                   <p
                                     className={`truncate text-sm font-black tracking-[-0.03em] ${
-                                      isSelected ? "text-slate-900" : "text-slate-700"
+                                      isSelected
+                                        ? "text-slate-900"
+                                        : "text-slate-700"
                                     }`}
                                   >
                                     {menu.title}
                                   </p>
+
                                   <p className="mt-1 truncate text-xs font-medium text-slate-400">
                                     {menu.path}
                                   </p>
@@ -589,6 +656,7 @@ export default function RolesPage() {
                     >
                       취소
                     </button>
+
                     <button
                       type="submit"
                       className="flex-[1.3] rounded-2xl bg-gradient-to-r from-slate-900 to-violet-600 py-4 text-sm font-black text-white shadow-[0_18px_36px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
@@ -599,6 +667,7 @@ export default function RolesPage() {
                 </form>
               </div>
 
+              {/* 역할 미리보기 */}
               <div className="custom-scrollbar overflow-y-auto border-t border-slate-100 bg-gradient-to-br from-slate-50 to-white p-8 lg:border-l lg:border-t-0 lg:p-10">
                 <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_14px_30px_rgba(15,23,42,0.05)]">
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-violet-600">
@@ -616,6 +685,7 @@ export default function RolesPage() {
                         <p className="truncate text-[1.15rem] font-black tracking-[-0.04em] text-slate-900">
                           {formData.name || "역할명"}
                         </p>
+
                         <p className="mt-2 inline-flex rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-600">
                           선택 메뉴 {selectedMenuIds.length}개
                         </p>
@@ -627,7 +697,7 @@ export default function RolesPage() {
                         [1, 2, 3].map((item) => (
                           <div
                             key={item}
-                            className="h-[58px] rounded-2xl bg-slate-100 animate-pulse"
+                            className="h-[58px] animate-pulse rounded-2xl bg-slate-100"
                           />
                         ))
                       ) : selectedMenuIds.length === 0 ? (
@@ -636,26 +706,33 @@ export default function RolesPage() {
                         </div>
                       ) : (
                         <>
-                          {selectedMenusPreview.slice(0, 6).map((menu) => (
-                            <div
-                              key={menu.id}
-                              className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3"
-                            >
-                              <span className="text-lg">{menu.icon}</span>
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-slate-800">
-                                  {menu.title}
-                                </p>
-                                <p className="truncate text-xs text-slate-400">
-                                  {menu.path}
-                                </p>
+                          {selectedMenusPreview
+                            .slice(0, 6)
+                            .map((menu) => (
+                              <div
+                                key={menu.id}
+                                className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3"
+                              >
+                                <span className="text-lg">
+                                  {menu.icon}
+                                </span>
+
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-bold text-slate-800">
+                                    {menu.title}
+                                  </p>
+
+                                  <p className="truncate text-xs text-slate-400">
+                                    {menu.path}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
 
                           {selectedMenusPreview.length > 6 && (
                             <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500">
-                              외 {selectedMenusPreview.length - 6}개 메뉴 선택됨
+                              외{" "}
+                              {selectedMenusPreview.length - 6}개 메뉴 선택됨
                             </div>
                           )}
                         </>
@@ -669,9 +746,10 @@ export default function RolesPage() {
         </div>
       )}
 
+      {/* 삭제 확인 모달 */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/45 p-6 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-white p-10 shadow-[0_40px_90px_rgba(15,23,42,0.25)] text-center animate-in zoom-in-95 duration-300">
+          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-white p-10 text-center shadow-[0_40px_90px_rgba(15,23,42,0.25)] animate-in zoom-in-95 duration-300">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[26px] bg-rose-50 text-rose-500 shadow-inner">
               <Trash2 className="h-9 w-9" />
             </div>
@@ -679,6 +757,7 @@ export default function RolesPage() {
             <h3 className="text-[1.8rem] font-black tracking-[-0.05em] text-slate-900">
               역할 삭제
             </h3>
+
             <p className="mt-3 text-sm leading-7 text-slate-500">
               <span className="font-bold text-slate-800">
                 {selectedRole?.name || "선택된 역할"}
@@ -695,6 +774,7 @@ export default function RolesPage() {
               >
                 삭제
               </button>
+
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
                 className="w-full rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-500 transition-all hover:bg-slate-50"
@@ -718,6 +798,23 @@ export default function RolesPage() {
 
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
+        }
+
+        @keyframes fade-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .fade-up {
+          animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1)
+            forwards;
         }
       `}</style>
     </div>

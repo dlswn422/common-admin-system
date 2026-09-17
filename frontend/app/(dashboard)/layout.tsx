@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AdminSidebar from "../components/layout/admin-sidebar";
-import AdminHeader from "../components/layout/admin-header";
 
 export default function DashboardLayout({
   children,
@@ -18,6 +17,7 @@ export default function DashboardLayout({
   const [isPermissionChecking, setIsPermissionChecking] = useState(true);
   const [isAllowed, setIsAllowed] = useState(false);
 
+  // 메뉴 접근 권한 확인
   const checkPermission = useCallback(async () => {
     try {
       setIsPermissionChecking(true);
@@ -64,16 +64,18 @@ export default function DashboardLayout({
         return;
       }
 
-      const normalizedPathname = pathname.endsWith("/")
-        ? pathname.slice(0, -1)
-        : pathname;
+      const normalizedPathname =
+        pathname.length > 1 && pathname.endsWith("/")
+          ? pathname.slice(0, -1)
+          : pathname;
 
       const hasPermission = menus.some((menu: any) => {
         if (!menu?.path) return false;
 
-        const menuPath = String(menu.path).endsWith("/")
-          ? String(menu.path).slice(0, -1)
-          : String(menu.path);
+        const menuPath =
+          String(menu.path).length > 1 && String(menu.path).endsWith("/")
+            ? String(menu.path).slice(0, -1)
+            : String(menu.path);
 
         return (
           normalizedPathname === menuPath ||
@@ -107,6 +109,7 @@ export default function DashboardLayout({
     checkPermission();
   }, [checkPermission]);
 
+  // 모바일 사이드바 스크롤 제어
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? "hidden" : "unset";
 
@@ -115,21 +118,24 @@ export default function DashboardLayout({
     };
   }, [isSidebarOpen]);
 
+  // 로그아웃 처리
   const confirmLogout = () => {
     localStorage.removeItem("user");
     setIsLogoutModalOpen(false);
     router.push("/login");
   };
 
+  // 권한 확인 로딩
   if (isPermissionChecking || !isAllowed) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
         <div className="flex flex-col items-center gap-4 rounded-[28px] border border-slate-200 bg-white px-10 py-8 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
           <div className="relative flex h-14 w-14 items-center justify-center">
             <div className="absolute inset-0 rounded-full border-4 border-slate-200" />
-            <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-blue-600 border-r-violet-500" />
+            <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-r-violet-500 border-t-blue-600" />
             <div className="h-5 w-5 rounded-full bg-gradient-to-r from-blue-600 to-violet-500" />
           </div>
+
           <div className="text-sm font-black text-slate-700">
             권한 확인 중입니다...
           </div>
@@ -140,60 +146,48 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen overflow-hidden bg-[#F8FAFC]">
-      {/* 데스크탑 고정 사이드바 */}
+      {/* 데스크탑 사이드바 */}
       <div className="hidden lg:block lg:w-72 lg:shrink-0">
         <div className="sticky top-0 h-[100dvh]">
-          <AdminSidebar onLogoutOpen={() => setIsLogoutModalOpen(true)} />
+          <AdminSidebar
+            onLogoutOpen={() => setIsLogoutModalOpen(true)}
+          />
         </div>
       </div>
 
       {/* 모바일 오버레이 */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-slate-950/40 backdrop-blur-sm lg:hidden animate-in fade-in duration-300"
+          className="fixed inset-0 z-[60] bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* 모바일 드로어 사이드바 */}
+      {/* 모바일 사이드바 */}
       <div
         className={`fixed inset-y-0 left-0 z-[70] h-[100dvh] w-72 transform transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] lg:hidden ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-      <AdminSidebar
-        // 로그아웃 확인창 열기
-        onLogoutOpen={() => setIsLogoutModalOpen(true)}
-
-        // 모바일 메뉴 선택 시 사이드바 닫기
-        onNavigate={() => setIsSidebarOpen(false)}
-      />
+        <AdminSidebar
+          onLogoutOpen={() => setIsLogoutModalOpen(true)}
+          onNavigate={() => setIsSidebarOpen(false)}
+        />
       </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="flex min-w-0 flex-1 flex-col h-[100dvh] overflow-hidden">
-        <div className="sticky top-0 z-50 shrink-0 bg-transparent px-3 pt-3 md:px-5 md:pt-4">
-          <header className="relative overflow-hidden rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(8,14,28,0.86)_0%,rgba(7,12,24,0.8)_100%)] shadow-[0_18px_40px_rgba(2,6,23,0.18)] backdrop-blur-2xl">
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_30%)]" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      {/* 메인 영역 */}
+      <div className="flex h-[100dvh] min-w-0 flex-1 flex-col overflow-hidden">
+        {/* 모바일 메뉴 버튼 */}
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed left-6 top-7 z-[55] flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-900/80 text-slate-300 shadow-xl backdrop-blur-xl lg:hidden"
+          aria-label="메뉴 열기"
+          type="button"
+        >
+          ☰
+        </button>
 
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-lg text-slate-300 shadow-[0_10px_24px_rgba(2,6,23,0.16)] backdrop-blur-xl transition-all hover:border-blue-400/20 hover:bg-blue-500/10 hover:text-white lg:hidden"
-              aria-label="메뉴 열기"
-              type="button"
-            >
-              ☰
-            </button>
-
-            <div className="min-w-0 pl-[58px] pr-4 lg:px-6">
-              <div className="flex min-h-[84px] items-center">
-                <AdminHeader />
-              </div>
-            </div>
-          </header>
-        </div>
-
+        {/* 페이지 콘텐츠 */}
         <main className="custom-scrollbar flex-1 overflow-y-auto">
           <div className="animate-in fade-in slide-in-from-bottom-2 px-3 pb-4 pt-3 duration-700 md:px-5 md:pb-6 md:pt-4">
             {children}
@@ -209,9 +203,11 @@ export default function DashboardLayout({
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10 text-3xl shadow-inner">
                 🚪
               </div>
+
               <h3 className="text-xl font-black tracking-tighter text-white">
                 로그아웃 하시겠습니까?
               </h3>
+
               <p className="mt-2 text-sm font-medium text-slate-400">
                 안전하게 세션을 종료하고
                 <br />
@@ -227,6 +223,7 @@ export default function DashboardLayout({
               >
                 취소
               </button>
+
               <button
                 onClick={confirmLogout}
                 className="flex-1 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-500 py-4 text-sm font-bold text-white shadow-lg shadow-rose-900/20 transition-all active:scale-95"

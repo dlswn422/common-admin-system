@@ -22,6 +22,7 @@ import {
   Filter,
   AlertTriangle,
 } from "lucide-react";
+import AdminHero from "../../components/layout/admin-hero";
 
 interface CodeGroup {
   id: string;
@@ -52,13 +53,13 @@ interface ConfirmConfig {
 }
 
 export default function CodesPage() {
-  // 데이터
+  // 데이터 상태
   const [groups, setGroups] = useState<CodeGroup[]>([]);
   const [details, setDetails] = useState<CodeDetail[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 모달
+  // 모달 상태
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -66,13 +67,13 @@ export default function CodesPage() {
   const [editingGroup, setEditingGroup] = useState<CodeGroup | null>(null);
   const [editingDetail, setEditingDetail] = useState<CodeDetail | null>(null);
 
-  // 그룹 Form
+  // 그룹 입력값
   const [groupForm, setGroupForm] = useState({
     group_code: "",
     group_name: "",
   });
 
-  // 상세 코드 Form
+  // 세부 코드 입력값
   const [detailForm, setDetailForm] = useState({
     code_value: "",
     code_name: "",
@@ -80,7 +81,7 @@ export default function CodesPage() {
     is_use: true,
   });
 
-  // 검색 / 필터
+  // 검색 및 필터
   const [detailSearchQuery, setDetailSearchQuery] = useState("");
   const [detailStatusFilter, setDetailStatusFilter] = useState<
     "all" | "active" | "inactive"
@@ -96,6 +97,7 @@ export default function CodesPage() {
     onConfirm: () => {},
   });
 
+  // 토스트 표시
   const showToast = useCallback(
     (message: string, type: "success" | "error" = "success") => {
       setToast({ message, type });
@@ -104,6 +106,7 @@ export default function CodesPage() {
     []
   );
 
+  // 확인창 열기
   const openConfirm = (
     title: string,
     message: string,
@@ -119,20 +122,27 @@ export default function CodesPage() {
     });
   };
 
-  // 그룹 조회
+  // 코드 그룹 조회
   const fetchGroups = useCallback(async () => {
     setIsLoading(true);
 
     try {
       const res = await fetch("/api/codes/groups");
       const data = await res.json();
+
       const nextGroups = Array.isArray(data) ? data : [];
 
       setGroups(nextGroups);
 
       setSelectedGroupId((prev) => {
         if (!nextGroups.length) return null;
-        if (prev && nextGroups.some((group) => group.id === prev)) return prev;
+
+        if (
+          prev &&
+          nextGroups.some((group) => group.id === prev)
+        ) {
+          return prev;
+        }
 
         return nextGroups[0].id;
       });
@@ -143,11 +153,14 @@ export default function CodesPage() {
     }
   }, [showToast]);
 
-  // 상세 코드 조회
+  // 세부 코드 조회
   const fetchDetails = useCallback(
     async (groupId: string) => {
       try {
-        const res = await fetch(`/api/codes/details?group_id=${groupId}`);
+        const res = await fetch(
+          `/api/codes/details?group_id=${groupId}`
+        );
+
         const data = await res.json();
 
         setDetails(Array.isArray(data) ? data : []);
@@ -171,16 +184,18 @@ export default function CodesPage() {
     }
   }, [selectedGroupId, fetchDetails]);
 
-  // 그룹 등록 / 수정 모달
+  // 그룹 모달 열기
   const openGroupModal = (group?: CodeGroup) => {
     if (group) {
       setEditingGroup(group);
+
       setGroupForm({
         group_code: group.group_code,
         group_name: group.group_name,
       });
     } else {
       setEditingGroup(null);
+
       setGroupForm({
         group_code: "",
         group_name: "",
@@ -190,7 +205,7 @@ export default function CodesPage() {
     setIsGroupModalOpen(true);
   };
 
-  // 상세 코드 등록 / 수정 모달
+  // 세부 코드 모달 열기
   const openDetailModal = (detail?: CodeDetail) => {
     if (detail) {
       setEditingDetail(detail);
@@ -215,7 +230,7 @@ export default function CodesPage() {
     setIsDetailModalOpen(true);
   };
 
-  // 그룹 저장
+  // 코드 그룹 저장
   const handleGroupSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -255,7 +270,7 @@ export default function CodesPage() {
     }
   };
 
-  // 상세 코드 저장
+  // 세부 코드 저장
   const handleDetailSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -300,8 +315,11 @@ export default function CodesPage() {
     }
   };
 
-  // 그룹 삭제
-  const handleGroupDelete = (id: string, e: React.MouseEvent) => {
+  // 코드 그룹 삭제
+  const handleGroupDelete = (
+    id: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
 
     openConfirm(
@@ -309,9 +327,12 @@ export default function CodesPage() {
       "그룹을 삭제하시겠습니까? 해당 그룹의 모든 세부 코드가 함께 삭제됩니다.",
       async () => {
         try {
-          const res = await fetch(`/api/codes/groups?id=${id}`, {
-            method: "DELETE",
-          });
+          const res = await fetch(
+            `/api/codes/groups?id=${id}`,
+            {
+              method: "DELETE",
+            }
+          );
 
           if (res.ok) {
             showToast("코드 그룹이 삭제되었습니다.");
@@ -332,16 +353,19 @@ export default function CodesPage() {
     );
   };
 
-  // 상세 코드 삭제
+  // 세부 코드 삭제
   const handleDetailDelete = (id: string) => {
     openConfirm(
       "세부 코드 삭제",
       "이 코드를 영구 삭제하시겠습니까?",
       async () => {
         try {
-          const res = await fetch(`/api/codes/details?id=${id}`, {
-            method: "DELETE",
-          });
+          const res = await fetch(
+            `/api/codes/details?id=${id}`,
+            {
+              method: "DELETE",
+            }
+          );
 
           if (res.ok) {
             showToast("세부 코드가 삭제되었습니다.");
@@ -360,14 +384,20 @@ export default function CodesPage() {
     );
   };
 
+  // 선택 그룹
   const selectedGroup = useMemo(() => {
-    return groups.find((group) => group.id === selectedGroupId) ?? null;
+    return (
+      groups.find((group) => group.id === selectedGroupId) ??
+      null
+    );
   }, [groups, selectedGroupId]);
 
+  // 사용 코드 수
   const usedDetailsCount = useMemo(() => {
     return details.filter((detail) => detail.is_use).length;
   }, [details]);
 
+  // 세부 코드 검색
   const filteredDetails = useMemo(() => {
     return details.filter((detail) => {
       const query = detailSearchQuery.trim().toLowerCase();
@@ -379,13 +409,16 @@ export default function CodesPage() {
 
       const matchesStatus =
         detailStatusFilter === "all" ||
-        (detailStatusFilter === "active" && detail.is_use) ||
-        (detailStatusFilter === "inactive" && !detail.is_use);
+        (detailStatusFilter === "active" &&
+          detail.is_use) ||
+        (detailStatusFilter === "inactive" &&
+          !detail.is_use);
 
       return matchesSearch && matchesStatus;
     });
   }, [details, detailSearchQuery, detailStatusFilter]);
 
+  // 검색 결과 문구
   const detailSummaryText = useMemo(() => {
     const parts: string[] = [];
 
@@ -415,7 +448,7 @@ export default function CodesPage() {
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-6 pb-10 md:space-y-8 md:pb-20">
-      {/* Toast */}
+      {/* 토스트 */}
       {toast && (
         <div
           className={`fixed inset-x-3 top-3 z-[11000] flex items-center gap-3 rounded-[18px] border border-white/10 px-4 py-3.5 shadow-[0_24px_50px_rgba(15,23,42,0.2)] backdrop-blur-2xl animate-in slide-in-from-top-4 duration-300 md:left-auto md:right-6 md:top-6 md:max-w-md md:rounded-[22px] md:px-5 md:py-4 ${
@@ -424,7 +457,7 @@ export default function CodesPage() {
               : "bg-rose-600/90 text-white"
           }`}
         >
-          <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-current animate-pulse" />
+          <div className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-current" />
 
           <p className="min-w-0 text-sm font-bold tracking-[-0.02em]">
             {toast.message}
@@ -491,53 +524,39 @@ export default function CodesPage() {
         </div>
       )}
 
-      {/* 페이지 상단 */}
-      <section className="soft-scale-in">
-        <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(8,15,30,0.96),rgba(11,18,36,0.88))] p-5 shadow-[0_28px_70px_rgba(2,6,23,0.18)] backdrop-blur-2xl md:rounded-[30px] md:p-8">
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_34%,transparent_72%,rgba(59,130,246,0.06))]" />
-          <div className="absolute -left-12 top-0 h-40 w-40 rounded-full bg-blue-500/12 blur-3xl" />
-          <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-violet-500/10 blur-3xl" />
+      {/* 코드 관리 헤더 */}
+      <AdminHero
+        eyebrow="코드 사전 관리"
+        icon={<Database className="h-3.5 w-3.5" />}
+        title="코드 관리"
+        description="시스템에서 사용하는 코드 그룹과 세부 코드를 관리합니다."
+        actions={
+          <button
+            type="button"
+            onClick={fetchGroups}
+            className="group inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.06] text-slate-200 transition-all hover:bg-blue-500/10 hover:text-white"
+            aria-label="새로고침"
+          >
+            <RotateCw
+              className={`h-5 w-5 transition-transform duration-500 ${
+                isLoading
+                  ? "animate-spin"
+                  : "group-hover:rotate-180"
+              }`}
+            />
+          </button>
+        }
+      />
 
-          <div className="relative flex items-end justify-between gap-4">
-            <div className="min-w-0 max-w-3xl">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-400/15 bg-blue-500/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-200 md:mb-4 md:text-[11px]">
-                <Database className="h-3.5 w-3.5" />
-                코드 사전 관리
-              </div>
-
-              <h1 className="text-[1.65rem] font-black leading-none tracking-[-0.05em] text-white md:text-[2.4rem]">
-                코드 관리
-              </h1>
-
-              <p className="mt-3 max-w-2xl text-[13px] leading-6 text-slate-300 md:mt-4 md:text-[15px] md:leading-7">
-                시스템에서 사용하는 코드 그룹과 세부 코드를 관리합니다.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={fetchGroups}
-              className="group inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-white/10 bg-white/[0.06] text-slate-200 shadow-[0_14px_28px_rgba(2,6,23,0.18)] backdrop-blur-xl transition-all duration-300 hover:border-blue-400/20 hover:bg-blue-500/10 hover:text-white md:h-14 md:w-14 md:rounded-[20px]"
-              aria-label="새로고침"
-            >
-              <RotateCw
-                className={`h-4.5 w-4.5 transition-transform duration-500 md:h-5 md:w-5 ${
-                  isLoading ? "animate-spin" : "group-hover:rotate-180"
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 요약 */}
+      {/* 코드 현황 */}
       <section className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
         {[
           {
             label: "전체 그룹",
             value: groups.length.toString().padStart(2, "0"),
             icon: Layers,
-            tone: "bg-blue-500/10 text-blue-600 ring-blue-500/15",
+            tone:
+              "bg-blue-500/10 text-blue-600 ring-blue-500/15",
           },
           {
             label: "선택 그룹 코드 수",
@@ -590,7 +609,7 @@ export default function CodesPage() {
         })}
       </section>
 
-      {/* 그룹 / 상세 */}
+      {/* 그룹 및 세부 코드 */}
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_minmax(0,1fr)] xl:gap-6">
         {/* 코드 그룹 */}
         <div className="flex h-auto max-h-[440px] flex-col overflow-hidden rounded-[24px] border border-slate-200/80 bg-white/95 shadow-[0_16px_36px_rgba(15,23,42,0.06)] md:max-h-[520px] md:rounded-[30px] xl:h-[750px] xl:max-h-none">
@@ -627,13 +646,16 @@ export default function CodesPage() {
               </div>
             ) : (
               groups.map((group) => {
-                const isSelected = selectedGroupId === group.id;
+                const isSelected =
+                  selectedGroupId === group.id;
 
                 return (
                   <button
                     key={group.id}
                     type="button"
-                    onClick={() => setSelectedGroupId(group.id)}
+                    onClick={() =>
+                      setSelectedGroupId(group.id)
+                    }
                     className={`group relative w-full overflow-hidden rounded-[18px] border p-4 text-left transition-all md:rounded-[24px] md:p-5 ${
                       isSelected
                         ? "border-slate-900 bg-slate-900 shadow-[0_14px_30px_rgba(15,23,42,0.18)]"
@@ -778,7 +800,7 @@ export default function CodesPage() {
           </div>
 
           <div className="scrollbar-hide flex-1 overflow-y-auto px-3 py-3 md:px-6 md:py-5">
-            {/* PC 헤더 */}
+            {/* 테이블 헤더 */}
             <div className="hidden rounded-2xl bg-slate-50 px-5 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 md:grid md:grid-cols-[100px_180px_minmax(0,1fr)_140px_120px] md:items-center md:gap-4">
               <span>우선순위</span>
               <span>코드값</span>
@@ -788,7 +810,8 @@ export default function CodesPage() {
             </div>
 
             <div className="mt-2 space-y-3 md:mt-3">
-              {selectedGroupId && filteredDetails.length > 0 ? (
+              {selectedGroupId &&
+              filteredDetails.length > 0 ? (
                 filteredDetails.map((detail) => (
                   <div
                     key={detail.id}
@@ -858,7 +881,9 @@ export default function CodesPage() {
                     <div className="flex items-center gap-2 md:justify-end">
                       <button
                         type="button"
-                        onClick={() => openDetailModal(detail)}
+                        onClick={() =>
+                          openDetailModal(detail)
+                        }
                         className="flex h-10 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-all hover:text-blue-600 md:h-11 md:w-11 md:flex-none md:rounded-2xl"
                       >
                         <Settings2 size={16} />
@@ -892,7 +917,7 @@ export default function CodesPage() {
         </div>
       </section>
 
-      {/* 그룹 모달 */}
+      {/* 그룹 설정 모달 */}
       {isGroupModalOpen && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xl animate-in fade-in md:p-6">
           <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[26px] border border-white/10 bg-white p-5 shadow-2xl animate-in zoom-in-95 md:rounded-[38px] md:p-10">
@@ -900,7 +925,9 @@ export default function CodesPage() {
 
             <button
               type="button"
-              onClick={() => setIsGroupModalOpen(false)}
+              onClick={() =>
+                setIsGroupModalOpen(false)
+              }
               className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-all hover:bg-slate-100 hover:text-slate-900 md:right-6 md:top-6 md:h-11 md:w-11"
             >
               <X size={20} />
@@ -913,11 +940,16 @@ export default function CodesPage() {
               </div>
 
               <h3 className="mt-4 text-[1.7rem] font-black tracking-tighter text-slate-900 md:text-[2.2rem]">
-                {editingGroup ? "그룹 정보 수정" : "그룹 추가"}
+                {editingGroup
+                  ? "그룹 정보 수정"
+                  : "그룹 추가"}
               </h3>
             </div>
 
-            <form onSubmit={handleGroupSave} className="space-y-5 md:space-y-6">
+            <form
+              onSubmit={handleGroupSave}
+              className="space-y-5 md:space-y-6"
+            >
               <div>
                 <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400">
                   Group Code
@@ -929,7 +961,8 @@ export default function CodesPage() {
                   onChange={(e) =>
                     setGroupForm({
                       ...groupForm,
-                      group_code: e.target.value.toUpperCase(),
+                      group_code:
+                        e.target.value.toUpperCase(),
                     })
                   }
                   className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 text-[15px] font-black uppercase text-blue-600 outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/10 md:h-15 md:px-6"
@@ -959,7 +992,9 @@ export default function CodesPage() {
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row md:gap-4 md:pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsGroupModalOpen(false)}
+                  onClick={() =>
+                    setIsGroupModalOpen(false)
+                  }
                   className="flex-1 rounded-2xl py-3.5 font-bold text-slate-400 hover:bg-slate-50 md:py-4.5"
                 >
                   취소
@@ -977,7 +1012,7 @@ export default function CodesPage() {
         </div>
       )}
 
-      {/* 상세 코드 모달 */}
+      {/* 세부 코드 설정 모달 */}
       {isDetailModalOpen && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xl animate-in fade-in md:p-6">
           <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[26px] border border-white/10 bg-white p-5 shadow-2xl animate-in zoom-in-95 md:rounded-[38px] md:p-10">
@@ -985,7 +1020,9 @@ export default function CodesPage() {
 
             <button
               type="button"
-              onClick={() => setIsDetailModalOpen(false)}
+              onClick={() =>
+                setIsDetailModalOpen(false)
+              }
               className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-slate-300 transition-all hover:bg-slate-100 hover:text-slate-900 md:right-6 md:top-6 md:h-11 md:w-11"
             >
               <X size={20} />
@@ -998,11 +1035,16 @@ export default function CodesPage() {
               </div>
 
               <h3 className="mt-4 text-[1.7rem] font-black tracking-tighter text-slate-900 md:text-[2.2rem]">
-                {editingDetail ? "세부 코드 수정" : "코드 추가"}
+                {editingDetail
+                  ? "세부 코드 수정"
+                  : "코드 추가"}
               </h3>
             </div>
 
-            <form onSubmit={handleDetailSave} className="space-y-5 md:space-y-6">
+            <form
+              onSubmit={handleDetailSave}
+              className="space-y-5 md:space-y-6"
+            >
               <div className="grid gap-5 md:grid-cols-2 md:gap-6">
                 <div>
                   <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400">
@@ -1015,7 +1057,8 @@ export default function CodesPage() {
                     onChange={(e) =>
                       setDetailForm({
                         ...detailForm,
-                        code_value: e.target.value.toUpperCase(),
+                        code_value:
+                          e.target.value.toUpperCase(),
                       })
                     }
                     className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 font-black uppercase text-emerald-600 outline-none md:h-15 md:px-6"
@@ -1035,7 +1078,9 @@ export default function CodesPage() {
                     onChange={(e) =>
                       setDetailForm({
                         ...detailForm,
-                        sort_order: Number(e.target.value),
+                        sort_order: Number(
+                          e.target.value
+                        ),
                       })
                     }
                     className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 font-black text-slate-900 outline-none focus:bg-white md:h-15 md:px-6"
@@ -1063,6 +1108,7 @@ export default function CodesPage() {
                 />
               </div>
 
+              {/* 사용 상태 */}
               <button
                 type="button"
                 onClick={() =>
@@ -1103,7 +1149,9 @@ export default function CodesPage() {
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row md:gap-4 md:pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsDetailModalOpen(false)}
+                  onClick={() =>
+                    setIsDetailModalOpen(false)
+                  }
                   className="flex-1 rounded-2xl py-3.5 font-bold text-slate-400 md:py-4.5"
                 >
                   취소
@@ -1129,22 +1177,6 @@ export default function CodesPage() {
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
-        }
-
-        @keyframes soft-scale-in {
-          from {
-            opacity: 0;
-            transform: scale(0.98);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .soft-scale-in {
-          animation: soft-scale-in 0.6s cubic-bezier(0.16, 1, 0.3, 1)
-            forwards;
         }
 
         .h-15 {
