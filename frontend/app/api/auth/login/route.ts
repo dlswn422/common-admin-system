@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import bcrypt from "bcryptjs";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY!;
+
+const supabase = createClient(
+  supabaseUrl,
+  supabaseSecretKey
+);
 
 export async function POST(request: Request) {
   try {
@@ -45,7 +50,12 @@ export async function POST(request: Request) {
       );
     }
 
-    if (user.password_hash !== password) {
+    const passwordMatched = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!passwordMatched) {
       return NextResponse.json(
         { error: "비밀번호가 일치하지 않습니다." },
         { status: 401 }
