@@ -161,7 +161,13 @@ export default function DashboardLayout({
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <AdminSidebar onLogoutOpen={() => setIsLogoutModalOpen(true)} />
+      <AdminSidebar
+        // 로그아웃 확인창 열기
+        onLogoutOpen={() => setIsLogoutModalOpen(true)}
+
+        // 모바일 메뉴 선택 시 사이드바 닫기
+        onNavigate={() => setIsSidebarOpen(false)}
+      />
       </div>
 
       {/* 메인 콘텐츠 */}

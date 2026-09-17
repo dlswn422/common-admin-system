@@ -1,103 +1,148 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation"; // 💡 useRouter 추가
 import { useEffect, useMemo, useState } from "react";
-import { Bell, ChevronRight } from "lucide-react";
+import { usePathname } from "next/navigation";
+
+interface UserInfo {
+  name?: string;
+  role?: string;
+  role_id?: string | number;
+  role_name?: string;
+}
+
+interface MenuItem {
+  id: string;
+  title: string;
+  path: string;
+}
 
 export default function AdminHeader() {
   const pathname = usePathname();
-  const router = useRouter(); // 💡 router 인스턴스 생성
-  
-  const [userName, setUserName] = useState("사용자");
-  const [userRole, setUserRole] = useState("권한 미정");
+
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [menus, setMenus] = useState<MenuItem[]>([]);
 
   useEffect(() => {
-    // 1. 로컬 스토리지에서 유저 정보 확인
+    // 로그인 사용자 조회
     const storedUser = localStorage.getItem("user");
 
-    // 2. 정보가 없으면 로그인 페이지로 강제 이동
     if (!storedUser) {
-      // alert("로그인이 필요한 서비스입니다."); // 필요 시 주석 해제하여 사용하세요.
-      router.replace("/login"); // 뒤로가기를 방지하기 위해 push 대신 replace 권장
+      setUser(null);
       return;
     }
 
     try {
-      // 3. 정보가 있다면 데이터 파싱 및 상태 업데이트
-      const parsed = JSON.parse(storedUser);
+      const parsedUser: UserInfo = JSON.parse(storedUser);
 
-      setUserName(parsed?.name || "사용자");
-      setUserRole(
-        parsed?.role_name || parsed?.role || parsed?.roles?.name || "권한 미정"
-      );
+      setUser(parsedUser);
+
+      if (!parsedUser.role_id) {
+        return;
+      }
+
+      // Header 제목용 메뉴 조회
+      const fetchMenus = async () => {
+        try {
+          const response = await fetch(
+            `/api/menus?role_id=${parsedUser.role_id}`,
+            {
+              cache: "no-store",
+            }
+          );
+
+          if (!response.ok) {
+            return;
+          }
+
+          const data = await response.json();
+
+          setMenus(Array.isArray(data) ? data : []);
+        } catch (error) {
+          console.error("헤더 메뉴 조회 실패:", error);
+        }
+      };
+
+      fetchMenus();
     } catch (error) {
-      console.error("유저 정보 파싱 에러", error);
-      // 데이터가 형식이 맞지 않거나 깨진 경우에도 로그인 페이지로 보냅니다.
-      router.replace("/login");
+      console.error("유저 정보 파싱 에러:", error);
+      setUser(null);
     }
-  }, [router]); // router 객체를 의존성 배열에 추가
+  }, []);
 
-  // 현재 경로 이름을 한글로 매핑하는 로직
+  // 현재 URL에 맞는 메뉴명 표시
   const displayName = useMemo(() => {
-    const cleanPath = pathname.split("?")[0].split("#")[0];
-    const segments = cleanPath.split("/").filter(Boolean);
-    const currentPathName = segments[segments.length - 1] || "dashboard";
+    const normalizedPath =
+      pathname.length > 1 && pathname.endsWith("/")
+        ? pathname.slice(0, -1)
+        : pathname;
 
-    const pathMap: Record<string, string> = {
+    const matchedMenu = menus.find((menu) => {
+      const menuPath =
+        menu.path.length > 1 && menu.path.endsWith("/")
+          ? menu.path.slice(0, -1)
+          : menu.path;
+
+      return (
+        normalizedPath === menuPath ||
+        normalizedPath.startsWith(`${menuPath}/`)
+      );
+    });
+
+    if (matchedMenu) {
+      return matchedMenu.title;
+    }
+
+    // DB 조회 전 기본 제목
+    const fallbackMap: Record<string, string> = {
       dashboard: "대시보드",
+      codes: "코드 관리",
+      menus: "메뉴 관리",
       users: "사용자 관리",
       roles: "역할 관리",
-      menus: "메뉴 관리",
-      codes: "코드 관리",
-      customers: "고객 관리",
-      "consult-history": "상담내역",
-      "sales-history": "영업내역",
     };
 
-    return pathMap[currentPathName] || currentPathName;
-  }, [pathname]);
+    const segments = normalizedPath.split("/").filter(Boolean);
+    const currentSegment =
+      segments[segments.length - 1] || "dashboard";
 
-  // 아바타에 표시할 이름 첫 글자
-  const initial = userName?.[0] || "사";
+    return fallbackMap[currentSegment] || currentSegment;
+  }, [menus, pathname]);
+
+  const userName = user?.name || "사용자";
+  const userRole =
+    user?.role_name || user?.role || "권한 정보 없음";
+
+  const initial = userName.charAt(0).toUpperCase();
 
   return (
-    <div className="header-shell">
-      <div className="title-block">
-        <div className="meta-line">
-          <span>관리 시스템</span>
-          <ChevronRight size={12} className="meta-sep" />
-          <span>운영 영역</span>
-        </div>
+    <div className="flex w-full min-w-0 items-center justify-between gap-4">
+      {/* 현재 페이지 */}
+      <div className="min-w-0">
+        <p className="mb-1 text-[11px] font-medium text-slate-500">
+          Common Admin
+        </p>
 
-        <div className="title-row">
-          <span className="title-dot" />
-          <h1 className="title-text">{displayName}</h1>
-        </div>
+        <h1 className="truncate text-lg font-bold tracking-[-0.02em] text-white md:text-xl">
+          {displayName}
+        </h1>
       </div>
 
-      <div className="action-group">
-        {/* 알림 버튼 */}
-        <button type="button" className="icon-btn" aria-label="알림">
-          <span className="icon-shine" />
-          <Bell size={18} className="icon-main" />
-          <span className="alert-dot-wrap">
-            <span className="alert-dot-ping" />
-            <span className="alert-dot" />
-          </span>
-        </button>
+      {/* 사용자 정보 */}
+      <div className="flex shrink-0 items-center gap-3">
+        <div className="hidden text-right sm:block">
+          <p className="max-w-[140px] truncate text-sm font-semibold text-slate-200">
+            {userName}
+          </p>
 
-        {/* 프로필 카드 섹션 */}
-        <div className="profile-card">
-          <div className="profile-copy">
-            <span className="profile-name">{userName}</span>
-            <span className="profile-role">{userRole}</span>
-          </div>
+          <p className="mt-0.5 max-w-[140px] truncate text-xs text-slate-500">
+            {userRole}
+          </p>
+        </div>
 
-          <div className="profile-avatar">{initial}</div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06] text-sm font-bold text-white">
+          {initial}
         </div>
       </div>
-
-      {/* 스타일은 별도의 CSS 파일 혹은 기존 방식을 그대로 유지하세요 */}
     </div>
   );
 }
