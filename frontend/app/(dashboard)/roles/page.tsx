@@ -508,243 +508,235 @@ export default function RolesPage() {
         </div>
       </section>
 
-      {/* 역할 설정 모달 */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/45 p-6 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="relative max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-[34px] border border-white/10 bg-white shadow-[0_40px_90px_rgba(15,23,42,0.25)] animate-in zoom-in-95 duration-300">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+{/* 역할 설정 모달 */}
+{isModalOpen && (
+  <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/45 p-6 backdrop-blur-xl animate-in fade-in duration-300">
+    <div className="relative max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-[34px] border border-white/10 bg-white shadow-[0_40px_90px_rgba(15,23,42,0.25)] animate-in zoom-in-95 duration-300">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
 
-            <div className="grid max-h-[90vh] overflow-hidden lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="custom-scrollbar overflow-y-auto p-8 md:p-10">
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="absolute right-6 top-6 flex h-11 w-11 items-center justify-center rounded-full text-slate-300 transition-all hover:bg-slate-100 hover:text-slate-900"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+      <div className="grid max-h-[90vh] overflow-hidden lg:grid-cols-[1.05fr_0.95fr]">
+        {/* 역할 설정 */}
+        <div className="custom-scrollbar overflow-y-auto p-8 md:p-10">
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="absolute right-6 top-6 flex h-11 w-11 items-center justify-center rounded-full text-slate-300 transition-all hover:bg-slate-100 hover:text-slate-900"
+          >
+            <X className="h-5 w-5" />
+          </button>
 
-                <div className="mb-8">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-slate-500">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    접근 권한 설정
-                  </div>
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-slate-500">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              접근 권한 설정
+            </div>
 
-                  <h3 className="mt-4 text-[2rem] font-black tracking-[-0.05em] text-slate-900">
-                    {selectedRole ? "역할 수정" : "역할 추가"}
-                  </h3>
+            <h3 className="mt-4 text-[2rem] font-black tracking-[-0.05em] text-slate-900">
+              {selectedRole ? "역할 수정" : "역할 추가"}
+            </h3>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    역할명과 접근 가능한 메뉴를 설정해 시스템 권한 범위를 관리합니다.
-                  </p>
-                </div>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              역할명과 접근 가능한 메뉴를 설정해 시스템 권한 범위를 관리합니다.
+            </p>
+          </div>
 
-                <form onSubmit={handleSave} className="space-y-8">
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-600">
-                      역할명
-                    </label>
+          <form onSubmit={handleSave} className="space-y-8">
+            {/* 역할명 */}
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-600">
+                역할명
+              </label>
 
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({
-                          name: e.target.value,
-                        })
-                      }
-                      className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 text-sm font-semibold text-slate-900 outline-none transition-all focus:border-violet-300 focus:bg-white focus:ring-4 focus:ring-violet-500/10"
-                      placeholder="예: 운영 관리자"
-                    />
-                  </div>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({
+                    name: e.target.value,
+                  })
+                }
+                className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 text-sm font-semibold text-slate-900 outline-none transition-all focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                placeholder="예: 운영 관리자"
+              />
+            </div>
 
-                  {/* 메뉴 권한 */}
-                  <div>
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <label className="text-sm font-semibold text-slate-600">
-                        접근 가능한 메뉴
-                      </label>
+            {/* 메뉴 권한 */}
+            <div>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <label className="text-sm font-semibold text-slate-600">
+                  접근 가능한 메뉴
+                </label>
 
-                      <span className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-600">
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                        {selectedMenuIds.length}개 선택됨
-                      </span>
-                    </div>
-
-                    {isAccessLoading ? (
-                      <div className="grid gap-3 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 sm:grid-cols-2">
-                        {[1, 2, 3, 4].map((item) => (
-                          <div
-                            key={item}
-                            className="h-[84px] animate-pulse rounded-[22px] border border-slate-200 bg-white"
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="grid gap-3 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 sm:grid-cols-2">
-                        {allMenus.map((menu) => {
-                          const isSelected =
-                            selectedMenuIds.includes(menu.id);
-
-                          return (
-                            <div
-                              key={menu.id}
-                              className="relative"
-                            >
-                              <input
-                                type="checkbox"
-                                id={`menu-${menu.id}`}
-                                checked={isSelected}
-                                onChange={() =>
-                                  toggleMenuSelection(menu.id)
-                                }
-                                className="peer hidden"
-                              />
-
-                              <label
-                                htmlFor={`menu-${menu.id}`}
-                                className={`group flex cursor-pointer items-center gap-4 rounded-[22px] border-2 p-4 transition-all duration-300 active:scale-[0.98] ${
-                                  isSelected
-                                    ? "border-violet-500 bg-white shadow-[0_14px_28px_rgba(109,40,217,0.08)]"
-                                    : "border-transparent bg-white/70 hover:border-slate-200"
-                                }`}
-                              >
-                                <div
-                                  className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl transition-all ${
-                                    isSelected
-                                      ? "bg-[linear-gradient(135deg,#1E1B4B_0%,#312E81_45%,#6D28D9_100%)] text-white shadow-[0_10px_24px_rgba(109,40,217,0.16)]"
-                                      : "bg-slate-100 text-slate-600"
-                                  }`}
-                                >
-                                  {menu.icon}
-                                </div>
-
-                                <div className="min-w-0 flex-1">
-                                  <p
-                                    className={`truncate text-sm font-black tracking-[-0.03em] ${
-                                      isSelected
-                                        ? "text-slate-900"
-                                        : "text-slate-700"
-                                    }`}
-                                  >
-                                    {menu.title}
-                                  </p>
-
-                                  <p className="mt-1 truncate text-xs font-medium text-slate-400">
-                                    {menu.path}
-                                  </p>
-                                </div>
-
-                                {isSelected && (
-                                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-white animate-in zoom-in duration-200">
-                                    <Check className="h-3 w-3 stroke-[3px]" />
-                                  </div>
-                                )}
-                              </label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsModalOpen(false)}
-                      className="flex-1 rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-500 transition-all hover:bg-slate-50"
-                    >
-                      취소
-                    </button>
-
-                    <button
-                      type="submit"
-                      className="flex-[1.3] rounded-2xl bg-gradient-to-r from-slate-900 to-violet-600 py-4 text-sm font-black text-white shadow-[0_18px_36px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
-                    >
-                      저장
-                    </button>
-                  </div>
-                </form>
+                <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                  {selectedMenuIds.length}개 선택됨
+                </span>
               </div>
 
-              {/* 역할 미리보기 */}
-              <div className="custom-scrollbar overflow-y-auto border-t border-slate-100 bg-gradient-to-br from-slate-50 to-white p-8 lg:border-l lg:border-t-0 lg:p-10">
-                <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_14px_30px_rgba(15,23,42,0.05)]">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-violet-600">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    역할 미리보기
-                  </div>
+              {isAccessLoading ? (
+                <div className="grid gap-3 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 sm:grid-cols-2">
+                  {[1, 2, 3, 4].map((item) => (
+                    <div
+                      key={item}
+                      className="h-[84px] animate-pulse rounded-[22px] border border-slate-200 bg-white"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid gap-3 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 sm:grid-cols-2">
+                  {allMenus.map((menu) => {
+                    const isSelected = selectedMenuIds.includes(menu.id);
 
-                  <div className="rounded-[26px] border border-slate-200/80 bg-gradient-to-br from-white to-slate-50 px-5 py-5">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,#1E1B4B_0%,#312E81_45%,#6D28D9_100%)] text-2xl font-black text-white shadow-[0_12px_28px_rgba(109,40,217,0.18)]">
-                        {(formData.name || "역").slice(0, 1)}
-                      </div>
+                    return (
+                      <div key={menu.id} className="relative">
+                        <input
+                          type="checkbox"
+                          id={`menu-${menu.id}`}
+                          checked={isSelected}
+                          onChange={() => toggleMenuSelection(menu.id)}
+                          className="peer hidden"
+                        />
 
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[1.15rem] font-black tracking-[-0.04em] text-slate-900">
-                          {formData.name || "역할명"}
-                        </p>
-
-                        <p className="mt-2 inline-flex rounded-xl bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-600">
-                          선택 메뉴 {selectedMenuIds.length}개
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 grid gap-3">
-                      {isAccessLoading ? (
-                        [1, 2, 3].map((item) => (
+                        <label
+                          htmlFor={`menu-${menu.id}`}
+                          className={`group flex cursor-pointer items-center gap-4 rounded-[22px] border-2 p-4 transition-all duration-300 active:scale-[0.98] ${
+                            isSelected
+                              ? "border-blue-500 bg-white shadow-[0_14px_28px_rgba(59,130,246,0.08)]"
+                              : "border-transparent bg-white/70 hover:border-slate-200"
+                          }`}
+                        >
                           <div
-                            key={item}
-                            className="h-[58px] animate-pulse rounded-2xl bg-slate-100"
-                          />
-                        ))
-                      ) : selectedMenuIds.length === 0 ? (
-                        <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-400">
-                          아직 선택된 메뉴가 없습니다.
-                        </div>
-                      ) : (
-                        <>
-                          {selectedMenusPreview
-                            .slice(0, 6)
-                            .map((menu) => (
-                              <div
-                                key={menu.id}
-                                className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3"
-                              >
-                                <span className="text-lg">
-                                  {menu.icon}
-                                </span>
+                            className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl transition-all ${
+                              isSelected
+                                ? "bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]"
+                                : "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {menu.icon}
+                          </div>
 
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-bold text-slate-800">
-                                    {menu.title}
-                                  </p>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={`truncate text-sm font-black tracking-[-0.03em] ${
+                                isSelected
+                                  ? "text-slate-900"
+                                  : "text-slate-700"
+                              }`}
+                            >
+                              {menu.title}
+                            </p>
 
-                                  <p className="truncate text-xs text-slate-400">
-                                    {menu.path}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
+                            <p className="mt-1 truncate text-xs font-medium text-slate-400">
+                              {menu.path}
+                            </p>
+                          </div>
 
-                          {selectedMenusPreview.length > 6 && (
-                            <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500">
-                              외{" "}
-                              {selectedMenusPreview.length - 6}개 메뉴 선택됨
+                          {isSelected && (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white animate-in zoom-in duration-200">
+                              <Check className="h-3 w-3 stroke-[3px]" />
                             </div>
                           )}
-                        </>
-                      )}
-                    </div>
-                  </div>
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
+              )}
+            </div>
+
+            {/* 저장 버튼 */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-500 transition-all hover:bg-slate-50"
+              >
+                취소
+              </button>
+
+              <button
+                type="submit"
+                className="flex-[1.3] rounded-2xl bg-slate-900 py-4 text-sm font-black text-white shadow-[0_18px_36px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+              >
+                저장
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* 역할 미리보기 */}
+        <div className="custom-scrollbar overflow-y-auto border-t border-slate-100 bg-slate-50/50 p-8 lg:border-l lg:border-t-0 lg:p-10">
+          <div className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_14px_30px_rgba(15,23,42,0.05)]">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-blue-600">
+              <Sparkles className="h-3.5 w-3.5" />
+              역할 미리보기
+            </div>
+
+            <div className="rounded-[26px] border border-slate-200/80 bg-gradient-to-br from-white to-slate-50 px-5 py-5">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-slate-900 text-2xl font-black text-white shadow-[0_12px_28px_rgba(15,23,42,0.18)]">
+                  {(formData.name || "역").slice(0, 1)}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[1.15rem] font-black tracking-[-0.04em] text-slate-900">
+                    {formData.name || "역할명"}
+                  </p>
+
+                  <p className="mt-2 inline-flex rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600">
+                    선택 메뉴 {selectedMenuIds.length}개
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3">
+                {isAccessLoading ? (
+                  [1, 2, 3].map((item) => (
+                    <div
+                      key={item}
+                      className="h-[58px] animate-pulse rounded-2xl bg-slate-100"
+                    />
+                  ))
+                ) : selectedMenuIds.length === 0 ? (
+                  <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-400">
+                    아직 선택된 메뉴가 없습니다.
+                  </div>
+                ) : (
+                  <>
+                    {selectedMenusPreview.slice(0, 6).map((menu) => (
+                      <div
+                        key={menu.id}
+                        className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3"
+                      >
+                        <span className="text-lg">{menu.icon}</span>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-800">
+                            {menu.title}
+                          </p>
+
+                          <p className="truncate text-xs text-slate-400">
+                            {menu.path}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+
+                    {selectedMenusPreview.length > 6 && (
+                      <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500">
+                        외 {selectedMenusPreview.length - 6}개 메뉴 선택됨
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* 삭제 확인 모달 */}
       {isDeleteModalOpen && (
